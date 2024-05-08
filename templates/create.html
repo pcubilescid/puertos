@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Añadir Puerto</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Añadir Nuevo Puerto</h1>
+    <form id="addPortForm" action="{{ url_for('add_port') }}" method="POST" onsubmit="return validarFormulario()">
+        <fieldset>
+            <legend>Datos Generales</legend>
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" name="nombre" required>
+            <label for="direccion">Dirección</label>
+            <input type="text" id="direccion" name="direccion" required><br>
+            <h3>Responsables</h3>
+            <div id="responsables">
+                <div id="responsable_1">
+                    <label for="nombre_responsable_1">Nombre</label>
+                    <input type="text" id="nombre_responsable_1" name="nombre_responsable_1" required>
+                    <label for="apellidos_responsable_1">Apellidos</label>
+                    <input type="text" id="apellidos_responsable_1" name="apellidos_responsable_1" required>
+                    <label for="cargo_responsable_1">Cargo</label>
+                    <input type="text" id="cargo_responsable_1" name="cargo_responsable_1" required>
+                </div>
+                <div id="responsable_2">
+                    <label for="nombre_responsable_2">Nombre</label>
+                    <input type="text" id="nombre_responsable_2" name="nombre_responsable_2" required>
+                    <label for="apellidos_responsable_2">Apellidos</label>
+                    <input type="text" id="apellidos_responsable_2" name="apellidos_responsable_2" required>
+                    <label for="cargo_responsable_2">Cargo</label>
+                    <input type="text" id="cargo_responsable_2" name="cargo_responsable_2" required>
+                </div>
+                <div id="responsable_3">
+                    <label for="nombre_responsable_3">Nombre</label>
+                    <input type="text" id="nombre_responsable_3" name="nombre_responsable_3" required>
+                    <label for="apellidos_responsable_3">Apellidos</label>
+                    <input type="text" id="apellidos_responsable_3" name="apellidos_responsable_3" required>
+                    <label for="cargo_responsable_3">Cargo</label>
+                    <input type="text" id="cargo_responsable_3" name="cargo_responsable_3" required>
+                </div>
+            </div>
+            <button type="button" class="button-add" onclick="agregarResponsable()">Añadir Responsable</button><br><br>
+            <h3>Contacto</h3>
+            <label for="telefono">Teléfono</label>
+            <input type="tel" id="telefono" name="telefono" required onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+            <input type="hidden" id="telefono_error">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required><br>
+        </fieldset>
+        <br>
+        <fieldset>
+            <legend>Datos Socioeconómicos</legend>
+            <label for="volumen_ventas">Volumen de Ventas</label>
+            <input type="number" id="volumen_ventas" name="volumen_ventas" step="0.01"><br>
+            <label for="colaboracion">Colaboración Público-Privada</label>
+            <input type="text" id="colaboracion" name="colaboracion">
+            <h3>Resultados de Explotación</h3>
+            <div id="resultados_explotacion">
+                <div id="resultado_explotacion_1">
+                    <label for="anio_explotacion_1">Año</label>
+                    <input type="number" id="anio_explotacion_1" name="anio_explotacion_1">
+                    <label for="valor_explotacion_1">Valor</label>
+                    <input type="number" id="valor_explotacion_1" name="valor_explotacion_1" step="0.01"><br>
+                </div>
+            </div>
+            <button type="button" class="button-add" onclick="agregarResultadoExplotacion()">Añadir Resultado de Explotación</button><br><br>
+            <h3>Resultados de Ejercicio</h3>
+            <div id="resultados_ejercicio">
+                <div id="resultado_ejercicio_1">
+                    <label for="anio_ejercicio_1">Año</label>
+                    <input type="number" id="anio_ejercicio_1" name="anio_ejercicio_1">
+                    <label for="valor_ejercicio_1">Valor</label>
+                    <input type="number" id="valor_ejercicio_1" name="valor_ejercicio_1" step="0.01"><br>
+                </div>
+            </div>
+            <button type="button" class="button-add" onclick="agregarResultadoEjercicio()">Añadir Resultado de Ejercicio</button><br><br>
+            <h3>Inversiones</h3>
+            <div id="inversiones">
+                <div id="inversion_1">
+                    <label for="anio_inversion_1">Año</label>
+                    <input type="number" id="anio_inversion_1" name="anio_inversion_1">
+                    <label for="valor_inversion_1">Valor</label>
+                    <input type="number" id="valor_inversion_1" name="valor_inversion_1" step="0.01">
+                    <label for="num_categorias_1">Número de Categorías</label>
+                    <select id="num_categorias_1" name="num_categorias_1" onchange="crearCamposCategoria(1)">
+                        <option value="0"></option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <!-- Agrega más opciones según sea necesario -->
+                    </select>
+                    <div id="campos_categorias_1">
+                        <!-- Aquí se agregarán dinámicamente los campos de categorías -->
+                    </div><br>
+                </div>
+            </div>
+            <button type="button" class="button-add" onclick="agregarInversion()">Añadir Inversión</button><br><br>
+            <h3>Trabajadores</h3>
+            <label for="num_trabajadores_total">Total</label>
+            <input type="number" id="num_trabajadores_total" name="num_trabajadores_total">
+            <label for="num_trabajadores_hombres">Hombres</label>
+            <input type="number" id="num_trabajadores_hombres" name="num_trabajadores_hombres">
+            <label for="num_trabajadores_mujeres">Mujeres</label>
+            <input type="number" id="num_trabajadores_mujeres" name="num_trabajadores_mujeres"><br>
+            <h3>Planes</h3>
+            <h4>Estratégico</h4>
+            <label for="plan_estrategico_enlace">Enlace</label>
+            <input type="text" id="plan_estrategico_enlace" name="plan_estrategico_enlace">
+            <label for="plan_estrategico_descripcion">Descripción</label>
+            <textarea id="plan_estrategico_descripcion" name="plan_estrategico_descripcion"></textarea>
+            <h4>Transición Energética</h4>
+            <label for="plan_transicion_energetica_enlace">Enlace</label>
+            <input type="text" id="plan_transicion_energetica_enlace" name="plan_transicion_energetica_enlace">
+            <label for="plan_transicion_energetica_descripcion">Descripción </label>
+            <textarea id="plan_transicion_energetica_descripcion" name="plan_transicion_energetica_descripcion"></textarea>
+            <h4>Igualdad</h4>
+            <label for="plan_igualdad_enlace">Enlace</label>
+            <input type="text" id="plan_igualdad_enlace" name="plan_igualdad_enlace">
+            <label for="plan_igualdad_descripcion">Descripción</label>
+            <textarea id="plan_igualdad_descripcion" name="plan_igualdad_descripcion"></textarea>
+        </fieldset>
+        <br>
+        <fieldset>
+            <legend>Datos Técnicos</legend>
+            <label for="nivel_proteccion_ambiental">Nivel de Protección Ambiental </label>
+            <select id="nivel_proteccion_ambiental" name="nivel_proteccion_ambiental">
+                <option value="0"></option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select><br><br>
+            <h3>Consumo Eléctrico (kW h)</h3>
+            <label for="consumo_electrico_total">Total</label>
+            <input type="number" id="consumo_electrico_total" name="consumo_electrico_total" step="0.01"><br>
+
+            <label for="consumo_electrico_autoconsumo">Autoconsumo</label>
+            <input type="number" id="consumo_electrico_autoconsumo" name="consumo_electrico_autoconsumo" step="0.01">
+
+            <label for="consumo_electrico_clientes">Clientes</label>
+            <input type="number" id="consumo_electrico_clientes" name="consumo_electrico_clientes" step="0.01">
+
+            <label for="venta_energetica_red">Venta Energética o a la Red</label>
+            <input type="number" id="venta_energetica_red" name="venta_energetica_red" step="0.01">
+
+            <h4>Clasificación del Consumo Eléctrico</h4>
+
+            <label for="num_zonas">Zonas</label>
+            <input type="number" id="num_zonas" name="num_zonas" onchange="crearCamposZonas()">
+            <br>
+            <div id="zonas_campos">
+                <!-- Aquí se agregarán dinámicamente los campos de zonas -->
+            </div><br>
+
+            <label for="num_franjas">Franjas Horarias</label>
+            <input type="number" id="num_franjas" name="num_franjas" onchange="crearCamposFranjas()">
+            <br>
+            <div id="franjas_campos">
+                <!-- Aquí se agregarán dinámicamente los campos de franjas horarias -->
+            </div><br>
+            <label for="num_usos">Usos</label>
+            <input type="number" id="num_usos" name="num_usos" onchange="crearCamposUsos()">
+            <br>
+            <div id="usos_campos">
+                <!-- Aquí se agregarán dinámicamente los campos de usos -->
+            </div><br>
+
+            <h3>Diques</h3>
+            <label for="num_diques">Número de Diques</label>
+            <input type="number" id="num_diques" name="num_diques" onchange="crearCamposDiques()">
+            <br>
+            <div id="diques_campos">
+                <!-- Aquí se agregarán dinámicamente los campos de diques -->
+            </div>
+        </fieldset>
+        <button type="button" id="button-back" onclick="window.location.href='{{ url_for('index') }}'">Volver</button>
+        <button type="submit" class="button-add" onclick="confirmarAñadir()">Añadir Puerto</button>
+    </form>
+</div>
+
+<script src="{{ url_for('static', filename='create.js') }}"></script>
+
+</body>
+</html>

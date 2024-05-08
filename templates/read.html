@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Puertos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Consulta de Puertos</h1>
+    <form action="{{ url_for('consult_port') }}" method="POST">
+        <label for="nombre_puerto">Nombre del Puerto</label>
+        <input type="text" id="nombre_puerto" name="nombre" >
+        <button type="submit">Filtrar</button>
+    </form>
+    <hr>
+    <h2>Lista de Puertos</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Teléfono</th>
+                <th>Correo Electrónico</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for puerto in puertos %}
+            <tr>
+                <td>{{ puerto[1] }}</td> <!-- Nombre -->
+                <td>{{ puerto[2] }}</td> <!-- Dirección -->
+                <td>{{ puerto[3] }}</td> <!-- Teléfono -->
+                <td>{{ puerto[4] }}</td> <!-- Correo Electrónico -->
+                <td class="port-actions">
+                    <div class="port-container">
+                        <div class="port-info"></div>
+                        <div class="action-buttons">
+                            <form action="{{ url_for('show_details', puerto_id=puerto[0]) }}" method="GET">
+                                <button class="action-button consult-button" type="submit">Consultar</button>
+                            </form>
+                            <form action="{{ url_for('modify_port', puerto_id=puerto[0]) }}" method="GET">
+                                <button class="action-button modify-button" type="submit">Modificar</button>
+                            </form>
+                            <form action="{{ url_for('delete_port') }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este puerto?');">
+                                <input type="hidden" name="puerto_id" value="{{ puerto[0] }}">
+                                <button class="action-button delete-button" type="submit">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <button type="button" id="button-back" onclick="window.location.href='{{ url_for('index') }}'">Volver</button>
+</body>
+</html>

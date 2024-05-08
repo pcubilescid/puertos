@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Puerto</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Modificar Puerto {{ generales[1] }}</h1>
+    <form id="modifyPortForm" action="{{ url_for('modify_port', puerto_id=generales[0]) }}" method="POST" onsubmit="return validarFormulario()">
+        <fieldset>
+            <legend>Datos Generales</legend>
+            <label for="nombre_pu">Nombre</label>
+            <input type="text" id="nombre_pu" name="nombre_pu" value="{{ generales[1] }}" required>
+            <label for="direccion">Dirección</label>
+            <input type="text" id="direccion" name="direccion" value="{{ generales[2] }}" required><br>
+            <h3>Responsables</h3>
+            <div id="responsables">
+                {% for responsable in responsables %}
+                <div id="responsable_{{ loop.index }}">
+                    <input type="hidden" name="id_responsable_{{ loop.index }}" value="{{ responsable[0] }}">
+                    <label for="nombre_responsable_{{ loop.index }}">Nombre</label>
+                    <input type="text" id="nombre_responsable_{{ loop.index }}" name="nombre_responsable_{{ loop.index }}" value="{{ responsable[2] }}" required>
+                    <label for="apellidos_responsable_{{ loop.index }}">Apellidos</label>
+                    <input type="text" id="apellidos_responsable_{{ loop.index }}" name="apellidos_responsable_{{ loop.index }}" value="{{ responsable[3] }}" required>
+                    <label for="cargo_responsable_{{ loop.index }}">Cargo</label>
+                    <input type="text" id="cargo_responsable_{{ loop.index }}" name="cargo_responsable_{{ loop.index }}" value="{{ responsable[4] }}" required>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="button-add" onclick="agregarResponsable()">Añadir Responsable</button><br><br>
+            <h3>Contacto</h3>
+            <label for="telefono">Teléfono</label>
+            <input type="tel" id="telefono" name="telefono" value="{{ generales[3] }}" required onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+            <input type="hidden" id="telefono_error">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="mail" value="{{ generales[4] }}" required><br>
+        </fieldset>
+        <br>
+        <fieldset>
+            <legend>Datos Socioeconómicos</legend>
+            <label for="volumen_ventas">Volumen de Ventas</label>
+            <input type="number" id="volumen_ventas" name="volumen_ventas" value="{{ socioeconomicos[5] }}" step="0.01"><br>
+            <label for="colaboracion">Colaboración Público-Privada</label>
+            <input type="text" id="colaboracion" name="colaboracion" value="{{ socioeconomicos[6] }}">
+            <h3>Resultados de Explotación</h3>
+            <div id="resultados_explotacion">
+                {% for resultado_explotacion in explotacion %}
+                <div id="resultado_explotacion_{{ loop.index }}">
+                    <input type="hidden" name="explotacion_id_{{ loop.index }}" value="{{ resultado_explotacion[0] }}">
+                    <label for="anio_explotacion_{{ loop.index }}">Año</label>
+                    <input type="number" id="anio_explotacion_{{ loop.index }}" name="anio_explotacion_{{ loop.index }}" value="{{ resultado_explotacion[2] }}">
+                    <label for="valor_explotacion_{{ loop.index }}">Valor</label>
+                    <input type="number" id="valor_explotacion_{{ loop.index }}" name="valor_explotacion_{{ loop.index }}" value="{{ resultado_explotacion[3] }}" step="0.01"><br>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="button-add" onclick="agregarResultadoExplotacion()">Añadir Resultado de Explotación</button><br><br>
+            <h3>Resultados de Ejercicio</h3>
+            <div id="resultados_ejercicio">
+                {% for resultado_ejercicio in ejercicios %}
+                <div id="resultado_ejercicio_{{ loop.index }}">
+                    <input type="hidden" name="ejercicio_id_{{ loop.index }}" value="{{ resultado_ejercicio[0] }}">
+                    <label for="anio_ejercicio_{{ loop.index }}">Año</label>
+                    <input type="number" id="anio_ejercicio_{{ loop.index }}" name="anio_ejercicio_{{ loop.index }}" value="{{ resultado_ejercicio[2] }}">
+                    <label for="valor_ejercicio_{{ loop.index }}">Valor</label>
+                    <input type="number" id="valor_ejercicio_{{ loop.index }}" name="valor_ejercicio_{{ loop.index }}" value="{{ resultado_ejercicio[3] }}" step="0.01"><br>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="button-add" onclick="agregarResultadoEjercicio()">Añadir Resultado de Ejercicio</button><br><br>
+            <h3>Inversiones</h3>
+            <div id="inversiones">
+                {% for inversion in inversiones %}
+                <div id="inversion_{{ loop.index }}">
+                    <input type="hidden" name="id_inversion_{{ loop.index }}" value="{{ inversion[0] }}">
+                    <label for="anio_inversion_{{ loop.index }}">Año</label>
+                    <input type="number" id="anio_inversion_{{ loop.index }}" name="anio_inversion_{{ loop.index }}" value="{{ inversion[2] }}">
+                    <label for="valor_inversion_{{ loop.index }}">Valor</label>
+                    <input type="number" id="valor_inversion_{{ loop.index }}" name="valor_inversion_{{ loop.index }}" value="{{ inversion[3] }}" step="0.01">
+                    <label for="num_categorias_{{ loop.index }}">Número de Categorías</label>
+                    <select id="num_categorias_{{ loop.index }}" name="num_categorias_{{ loop.index }}" onchange="crearCamposCategoria({{ loop.index }})">
+                        <option value="0"></option>
+                        <option value="1" >1</option>
+                        <option value="2" >2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5" >5</option>
+                    </select>
+                    <div id="campos_categorias_{{ loop.index }}">
+                        {% for categoria in categorias %}
+                            {% if inversion[0] == categoria[1] %}
+                                <label for="nombre_categoria_{{ loop.index }}">Nombre de Categoría {{ loop.index }}</label>
+                                <input type="text" id="nombre_categoria_{{ loop.index }}" name="nombre_categoria_{{ loop.index }}" value="{{ categoria[3] }}">
+                                <label for="valor_categoria_{{ loop.index }}">Valor de Categoría {{ loop.index }}</label>
+                                <input type="number" id="valor_categoria_{{ loop.index }}" name="valor_categoria_{{ loop.index }}" value="{{ categoria[4] }}"><br>
+                            {% endif %}
+                        {% endfor %}
+                    </div><br>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="button-add" onclick="agregarInversion()">Añadir Inversión</button><br><br>
+            <h3>Trabajadores</h3>
+            <label for="num_trabajadores_total">Total</label>
+            <input type="number" id="num_trabajadores_total" name="num_trabajadores_total" value="{{socioeconomicos[2]}}">
+            <label for="num_trabajadores_hombres">Hombres</label>
+            <input type="number" id="num_trabajadores_hombres" name="num_trabajadores_hombres" value="{{socioeconomicos[3]}}">
+            <label for="num_trabajadores_mujeres">Mujeres</label>
+            <input type="number" id="num_trabajadores_mujeres" name="num_trabajadores_mujeres" value="{{socioeconomicos[4]}}"><br>
+            <h3>Planes</h3>
+            <h4>Estratégico</h4>
+            <label for="plan_estrategico_enlace">Enlace</label>
+            <input type="text" id="plan_estrategico_enlace" name="plan_estrategico_enlace" value="{{socioeconomicos[7]}}">
+            <label for="plan_estrategico_descripcion">Descripción</label>
+            <textarea id="plan_estrategico_descripcion" name="plan_estrategico_descripcion">{{socioeconomicos[8]}}</textarea>
+            <h4>Transición Energética</h4>
+            <label for="plan_transicion_energetica_enlace">Enlace</label>
+            <input type="text" id="plan_transicion_energetica_enlace" name="plan_transicion_energetica_enlace" value="{{socioeconomicos[9]}}">
+            <label for="plan_transicion_energetica_descripcion">Descripción</label>
+            <textarea id="plan_transicion_energetica_descripcion" name="plan_transicion_energetica_descripcion">{{socioeconomicos[10]}}</textarea>
+            <h4>Igualdad</h4>
+            <label for="plan_igualdad_enlace">Enlace</label>
+            <input type="text" id="plan_igualdad_enlace" name="plan_igualdad_enlace" value="{{socioeconomicos[11]}}">
+            <label for="plan_igualdad_descripcion">Descripción</label>
+            <textarea id="plan_igualdad_descripcion" name="plan_igualdad_descripcion">{{socioeconomicos[12]}}</textarea>
+        </fieldset>
+        <br>
+        <fieldset>
+            <legend>Datos Técnicos</legend>
+            <label for="nivel_proteccion_ambiental">Nivel de Protección Ambiental</label>
+            <select id="nivel_proteccion_ambiental" name="nivel_proteccion_ambiental">
+                <option value="0"></option>
+                <option value="1" {% if tecnicos[6] == 1 %} selected {% endif %}>1</option>
+                <option value="2" {% if tecnicos[6] == 2 %} selected {% endif %}>2</option>
+                <option value="3" {% if tecnicos[6] == 3 %} selected {% endif %}>3</option>
+                <option value="4" {% if tecnicos[6] == 4 %} selected {% endif %}>4</option>
+                <option value="5" {% if tecnicos[6] == 5 %} selected {% endif %}>5</option>
+            </select><br><br>
+            <h3>Consumo Eléctrico (kW h)</h3>
+            <label for="consumo_electrico_total">Total</label>
+            <input type="number" id="consumo_electrico_total" name="consumo_electrico_total" value="{{tecnicos[2]}}" step="0.01"><br>
+
+            <label for="consumo_electrico_autoconsumo">Autoconsumo</label>
+            <input type="number" id="consumo_electrico_autoconsumo" name="consumo_electrico_autoconsumo" value="{{tecnicos[3]}}" step="0.01">
+
+            <label for="consumo_electrico_clientes">Clientes</label>
+            <input type="number" id="consumo_electrico_clientes" name="consumo_electrico_clientes" value="{{tecnicos[4]}}" step="0.01">
+
+            <label for="venta_energetica_red">Venta Energética o a la Red</label>
+            <input type="number" id="venta_energetica_red" name="venta_energetica_red" value="{{tecnicos[5]}}" step="0.01">
+
+            <h4>Clasificación del Consumo Eléctrico</h4>
+
+            <label for="num_zonas">Zonas</label>
+            <input type="number" id="num_zonas" name="num_zonas" value="" onchange="crearCamposZonas()">
+            <br>
+            <div id="zonas_campos">
+                <!-- Aquí se agregarán dinámicamente los campos de zonas -->
+                {% for zona in zonas %}
+                <div>
+                    <input type="hidden" name="id_zona_{{ loop.index }}" value="{{ zona[0] }}">
+                    <label for="zona_nombre_{{ loop.index }}">Zona {{ loop.index }} </label>
+                    <input type="text" id="zona_nombre_{{ loop.index }}" name="zona_nombre_{{ loop.index }}" value="{{ zona[2] }}">
+                    <label for="zona_consumo_{{ loop.index }}">Consumo en esta zona</label>
+                    <input type="number" id="zona_consumo_{{ loop.index }}" name="zona_consumo_{{ loop.index }}" value="{{ zona[3] }}" step="0.01"><br>
+                </div>
+                {% endfor %}
+            </div><br>
+
+            <label for="num_franjas">Franjas Horarias</label>
+            <input type="number" id="num_franjas" name="num_franjas" value="" onchange="crearCamposFranjas()">
+            <br>
+            <div id="franjas_campos">
+                {% for franja in franjas %}
+                    <input type="hidden" name="franja_id_{{ loop.index }}" value="{{ franja[0] }}">
+                    <label for="franja_inicio_{{ loop.index }}">Franja Horaria {{ loop.index }} </label>
+                    <input type="time" id="franja_inicio_{{ loop.index }}" name="franja_inicio_{{ loop.index }}" value="{{ franja[2] }}">
+                    <input type="time" id="franja_fin_{{ loop.index }}" name="franja_fin_{{ loop.index }}" value="{{ franja[3] }}">
+                    <label for="franja_consumo_{{ loop.index }}">Consumo eléctrico  </label>
+                    <input type="number" id="franja_consumo_{{ loop.index }}" name="franja_consumo_{{ loop.index }}" value="{{ franja[4] }}"><br>
+                {% endfor %}
+            </div><br>
+            <label for="num_usos">Usos</label>
+            <input type="number" id="num_usos" name="num_usos" value="" onchange="crearCamposUsos()">
+            <br>
+            <div id="usos_campos">
+                {% for uso in usos %}
+                    <input type="hidden" name="uso_id_{{ loop.index }}" value="{{ uso[0] }}">
+                    <label for="uso_nombre_{{ loop.index }}">Uso {{ loop.index }} </label>
+                    <input type="text" id="uso_nombre_{{ loop.index }}" name="uso_nombre_{{ loop.index }}" value="{{ uso[2] }}">
+                    <label for="uso_consumo_{{ loop.index }}">Consumo eléctrico  </label>
+                    <input type="number" id="uso_consumo_{{ loop.index }}" name="uso_consumo_{{ loop.index }}" value="{{ uso[3] }}"><br>
+                {% endfor %}
+            </div><br>
+
+            <h3>Diques</h3>
+            <label for="num_diques">Número de Diques</label>
+            <input type="number" id="num_diques" name="num_diques" value="" onchange="crearCamposDiques()">
+            <br>
+            <div id="diques_campos">
+                {% for dique in diques %}
+                    <fieldset>
+                        <legend>Dique {{ loop.index }}</legend>
+                        <input type="hidden" name="dique_id_{{ loop.index }}" value="{{ dique[0] }}">
+                        <label for="dique_nombre_{{ loop.index }}">Nombre </label>
+                        <input type="text" id="dique_nombre_{{ loop.index }}" name="dique_nombre_{{ loop.index }}" value="{{ dique[2] }}" >
+                        <label for="dique_amplitud_{{ loop.index }}">Amplitud  </label>
+                        <input type="number" id="dique_amplitud_{{ loop.index }}" name="dique_amplitud_{{ loop.index }}" value="{{ dique[3] }}">
+                        <label for="dique_periodo_{{ loop.index }}">Periodo  </label>
+                        <input type="number" id="dique_periodo_{{ loop.index }}" name="dique_periodo_{{ loop.index }}" value="{{ dique[4] }}"><br>
+                        <label for="dique_velocidad_{{ loop.index }}">Velocidad  </label>
+                        <input type="number" id="dique_velocidad_{{ loop.index }}" name="dique_velocidad_{{ loop.index }}" value="{{ dique[5] }}">
+                        <label for="dique_longitud_{{ loop.index }}">Longitud de Onda  </label>
+                        <input type="number" id="dique_longitud_{{ loop.index }}" name="dique_longitud_{{ loop.index }}" value="{{ dique[6] }}"><br>
+                        <label for="dique_profundidad_{{ loop.index }}">Profundidad  </label>
+                        <input type="number" id="dique_profundidad_{{ loop.index }}" name="dique_profundidad_{{ loop.index }}" value="{{ dique[7] }}">
+                        <label for="dique_escullera_{{ loop.index }}">¿Hay Escullera? </label>
+                        <select id="dique_escullera_{{ loop.index }}" name="dique_escullera_{{ loop.index }}">
+                            <option value="1" {% if dique[8] == 1 %} selected {% endif %}>Sí</option>
+                            <option value="0" {% if dique[8] == 0 %} selected {% endif %}>No</option>
+                        </select>
+
+                    </fieldset>
+                {% endfor %}
+            </div>
+        </fieldset>
+        <button type="button" id="button-back" onclick="window.location.href='{{ url_for('consult_port') }}'">Volver</button>
+        <button type="submit" class="button-mod" onclick="confirmarModificar()">Modificar Puerto</button>
+
+    </form>
+</div>
+
+<script src="{{ url_for('static', filename='create.js') }}"></script>
+
+</body>
+</html>
