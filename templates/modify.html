@@ -9,7 +9,7 @@
 <body>
 <div class="container">
     <h1>Modificar Puerto {{ generales[1] }}</h1>
-    <form id="modifyPortForm" action="{{ url_for('modify_port', puerto_id=generales[0]) }}" method="POST" onsubmit="return validarFormulario()">
+    <form id="modifyPortForm" action="{{ url_for('modify_port', puerto_id=generales[0] , nombre_puerto=generales[1]) }}" method="POST" onsubmit="return validarFormulario()">
         <fieldset>
             <legend>Datos Generales</legend>
             <label for="nombre_pu">Nombre</label>
@@ -73,6 +73,7 @@
             <button type="button" class="button-add" onclick="agregarResultadoEjercicio()">Añadir Resultado de Ejercicio</button><br><br>
             <h3>Inversiones</h3>
             <div id="inversiones">
+                {% set counter = namespace (i = 1) %}
                 {% for inversion in inversiones %}
                 <div id="inversion_{{ loop.index }}">
                     <input type="hidden" name="id_inversion_{{ loop.index }}" value="{{ inversion[0] }}">
@@ -88,20 +89,29 @@
                         <option value="3">3</option>
                         <option value="4">4</option>
                         <option value="5" >5</option>
+                        <option value="6" >6</option>
+                        <option value="7" >7</option>
                     </select>
                     <div id="campos_categorias_{{ loop.index }}">
+                        {% set ns = namespace (j = 1) %}
                         {% for categoria in categorias %}
                             {% if inversion[0] == categoria[1] %}
-                                <label for="nombre_categoria_{{ loop.index }}">Nombre de Categoría {{ loop.index }}</label>
-                                <input type="text" id="nombre_categoria_{{ loop.index }}" name="nombre_categoria_{{ loop.index }}" value="{{ categoria[3] }}">
-                                <label for="valor_categoria_{{ loop.index }}">Valor de Categoría {{ loop.index }}</label>
-                                <input type="number" id="valor_categoria_{{ loop.index }}" name="valor_categoria_{{ loop.index }}" value="{{ categoria[4] }}"><br>
+                                <input type="hidden" name="id_categoria_{{ counter.i }}_{{ ns.j }}" value="{{ categoria[0] }}">
+                                <label for="nombre_categoria_{{ counter.i }}_{{ ns.j }}">Nombre de Categoría {{ j }}</label>
+                                <input type="text" id="nombre_categoria_{{ counter.i }}_{{ ns.j }}" name="nombre_categoria_{{ counter.i }}_{{ ns.j }}" value="{{ categoria[3] }}">
+                                <label for="valor_categoria_{{ counter.i }}_{{ ns.j }}">Valor de Categoría {{ j }}</label>
+                                <input type="number" id="valor_categoria_{{ counter.i }}_{{ ns.j }}" name="valor_categoria_{{ counter.i }}_{{ ns.j }}" value="{{ categoria[4] }}"><br>
+                                {% set ns.j = ns.j+1 %}
                             {% endif %}
+
                         {% endfor %}
+                        {% set counter.i = counter.i+1 %}
                     </div><br>
                 </div>
+
                 {% endfor %}
             </div>
+
             <button type="button" class="button-add" onclick="agregarInversion()">Añadir Inversión</button><br><br>
             <h3>Trabajadores</h3>
             <label for="num_trabajadores_total">Total</label>
@@ -132,7 +142,7 @@
             <legend>Datos Técnicos</legend>
             <label for="nivel_proteccion_ambiental">Nivel de Protección Ambiental</label>
             <select id="nivel_proteccion_ambiental" name="nivel_proteccion_ambiental">
-                <option value="0"></option>
+                <option value=""></option>
                 <option value="1" {% if tecnicos[6] == 1 %} selected {% endif %}>1</option>
                 <option value="2" {% if tecnicos[6] == 2 %} selected {% endif %}>2</option>
                 <option value="3" {% if tecnicos[6] == 3 %} selected {% endif %}>3</option>

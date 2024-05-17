@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from sqlite3 import Error
+from gevent.pywsgi import WSGIServer
 
 app = Flask(__name__)
-
+app.config['DEBUG'] = True
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -98,32 +99,39 @@ def add_port():
 
                 # Obtener los resultados de inversiones del formulario
                 inversiones = []
-                categorias = []
-                for i in range(1, 11):  # Máximo de 10 responsables
+                for i in range(1, 11):  # Máximo de 10 inversiones
                     anio_inversion = request.form.get(f'anio_inversion_{i}')
                     valor_inversion = request.form.get(f'valor_inversion_{i}')
-                    # Obtener los resultados de categorias de inversiones del formulario
-                    for j in range(1, 11):  # Máximo de 10 responsables
-                        nombre_categoria = request.form.get(f'nombre_categoria_{i}_{j}')
-                        valor_categoria = request.form.get(f'valor_categoria_{i}_{j}')
-                        if nombre_categoria and valor_categoria:  # Si se proporciona nombre y cargo
-                            categorias.append((nombre_categoria, valor_categoria))
-                    if anio_inversion and valor_inversion:  # Si se proporciona nombre y cargo
-                        inversiones.append((anio_inversion, valor_inversion))
+                    if anio_inversion and valor_inversion:  # Si se proporciona año y valor de inversión
+                        # Guardar la inversión actual
+                        inversion_actual = (anio_inversion, valor_inversion)
+                        # Inicializar la lista de categorías para esta inversión
+                        categorias = []
+                        # Obtener los resultados de categorías de inversión del formulario
+                        for j in range(1, 11):  # Máximo de 10 categorías por inversión
+                            nombre_categoria = request.form.get(f'nombre_categoria_{i}_{j}')
+                            valor_categoria = request.form.get(f'valor_categoria_{i}_{j}')
+                            if nombre_categoria and valor_categoria:  # Si se proporciona nombre y valor de categoría
+                                categorias.append((nombre_categoria, valor_categoria))
+                        # Guardar la inversión actual junto con sus categorías
+                        inversiones.append((inversion_actual, categorias))
 
+                # Iterar sobre las inversiones y guardarlas en la base de datos
+                for inversion, categorias in inversiones:
 
-                for inversion in inversiones:
                     cursor.execute('''
-                                        INSERT INTO Inversiones (puerto_id, anio_in, valor_in)
-                                        VALUES (?, ?, ?)
-                                    ''', (puerto_id, inversion[0], inversion[1]))
+                        INSERT INTO Inversiones (puerto_id, anio_in, valor_in)
+                        VALUES (?, ?, ?)
+                    ''', (puerto_id, inversion[0], inversion[1]))
                     inversion_id = cursor.lastrowid
 
+                    # Iterar sobre las categorías de esta inversión y guardarlas en la base de datos
                     for categoria in categorias:
+
                         cursor.execute('''
-                                            INSERT INTO CategoriasInversiones (inversion_id, puerto_id, nombre_cat, valor_cat)
-                                            VALUES (?, ?, ?, ?)
-                                        ''', (inversion_id, puerto_id, categoria[0], categoria[1]))
+                            INSERT INTO CategoriasInversiones (inversion_id, puerto_id, nombre_cat, valor_cat)
+                            VALUES (?, ?, ?, ?)
+                        ''', (inversion_id, puerto_id, categoria[0], categoria[1]))
 
                 # Insertar datos en la tabla 'Tecnicos'
                 consumo_electrico_total = request.form['consumo_electrico_total']
@@ -193,7 +201,7 @@ def add_port():
                     profundidad = request.form.get(f'dique_profundidad_{i}')
                     escullera = request.form.get(f'dique_escullera_{i}')
 
-                    if nombre_dique and amplitud and periodo and velocidad and longitud_onda and profundidad and escullera:  # Si se proporciona nombre y cargo
+                    if nombre_dique:  # Si se proporciona nombre y cargo
                         diques.append((nombre_dique, amplitud, periodo, velocidad, longitud_onda, profundidad, escullera))
 
                 for dique in diques:
@@ -227,9 +235,28 @@ def consult_port():
 
     if request.method == 'POST':
         nombre = request.form['nombre']
+        plan = request.form.get('plan')
+        si_no = request.form.get('si_no')
         # Consulta para filtrar por nombre
-        cursor.execute("SELECT puerto_id, nombre_pu, direccion, telefono, mail FROM Generales WHERE nombre_pu LIKE ?",
-                       ('%' + nombre + '%',))
+        query = "SELECT G.puerto_id, G.nombre_pu, G.direccion, G.telefono, G.mail FROM Generales G JOIN Socioeconomicos S ON G.puerto_id = S.puerto_id WHERE G.nombre_pu LIKE ?"
+        parameters = ('%' + nombre + '%',)
+
+        if plan and si_no:
+            if plan == "Plan Estratégico":
+                field = "plan_estrategico_enlace"
+            elif plan == "Plan Transición Energética":
+                field = "plan_transicion_energetica_enlace"
+            elif plan == "Plan Igualdad":
+                field = "plan_igualdad_enlace"
+            if si_no == "Si":
+                condition = f"(S.{field} IS NOT NULL AND LENGTH(S.{field}) > 0)"
+            elif si_no == "No":
+                condition = f"(S.{field} IS NULL OR LENGTH(S.{field}) = 0)"
+            query += f" AND {condition}"
+        else:
+            pass
+
+        cursor.execute(query, parameters)
         puertos = cursor.fetchall()
 
     conn.close()
@@ -290,19 +317,26 @@ def modify_port(puerto_id):
                     ejercicios.append((ejercicio_id, anio_ejercicio, valor_ejercicio))
 
             inversiones = []
-            categorias = []
+
             for i in range(1, 11):  # Máximo de 10 responsables
+                num_categorias = request.form.get(f'num_categorias_{i}')
                 inversion_id = request.form.get(f'id_inversion_{i}')
                 anio_inversion = request.form.get(f'anio_inversion_{i}')
                 valor_inversion = request.form.get(f'valor_inversion_{i}')
-                # Obtener los resultados de categorias de inversiones del formulario
-                for j in range(1, 11):  # Máximo de 10 responsables
-                    nombre_categoria = request.form.get(f'nombre_categoria_{j}')
-                    valor_categoria = request.form.get(f'valor_categoria_{j}')
-                    if nombre_categoria and valor_categoria:  # Si se proporciona nombre y cargo
-                        categorias.append((nombre_categoria, valor_categoria))
                 if anio_inversion and valor_inversion:  # Si se proporciona nombre y cargo
-                    inversiones.append((inversion_id, anio_inversion, valor_inversion))
+                    inversion_actual = (inversion_id, anio_inversion, valor_inversion,num_categorias)
+                # Obtener los resultados de categorias de inversiones del formulario
+                    categorias = []
+                    for j in range(1, 11):  # Máximo de 10 responsables
+                        categoria_id = request.form.get(f'id_categoria_{i}_{j}')
+                        nombre_categoria = request.form.get(f'nombre_categoria_{i}_{j}')
+                        valor_categoria = request.form.get(f'valor_categoria_{i}_{j}')
+
+                        if nombre_categoria and valor_categoria:  # Si se proporciona nombre y cargo
+
+                            categorias.append((categoria_id, nombre_categoria, valor_categoria))
+                    inversiones.append((inversion_actual, categorias))
+
 
             zonas = []
             for i in range(1, 11):  # Máximo de 10 responsables
@@ -341,7 +375,7 @@ def modify_port(puerto_id):
                 profundidad = request.form.get(f'dique_profundidad_{i}')
                 escullera = request.form.get(f'dique_escullera_{i}')
 
-                if nombre_dique and amplitud and periodo and velocidad and longitud_onda and profundidad and escullera:
+                if nombre_dique:
                     diques.append((dique_id, nombre_dique, amplitud, periodo, velocidad, longitud_onda, profundidad, escullera))
 
             # Conexión a la base de datos
@@ -440,7 +474,9 @@ def modify_port(puerto_id):
                     ''', (puerto_id, ejercicio[1], ejercicio[2]))
 
             # Para las inversiones
-            for inversion in inversiones:
+            for inversion,categorias in inversiones:
+                if inversion[3]:
+                    cursor.execute("DELETE FROM CategoriasInversiones WHERE inversion_id=?", (inversion[0],))
                 cursor.execute('''
                     SELECT * FROM Inversiones
                     WHERE inversion_id =?
@@ -463,9 +499,27 @@ def modify_port(puerto_id):
 
                 for categoria in categorias:
                     cursor.execute('''
-                            INSERT OR REPLACE INTO CategoriasInversiones (inversion_id, puerto_id, nombre_cat, valor_cat)
-                            VALUES (?, ?, ?, ?)
-                        ''', (inversion_id_cat, puerto_id, categoria[0], categoria[1]))
+                                        SELECT * FROM CategoriasInversiones
+                                        WHERE categoria_id=?
+                                    ''', (categoria[0],))
+                    existing_cat = cursor.fetchone()
+
+                    if existing_cat:
+                        cursor.execute('''
+                                            UPDATE CategoriasInversiones
+                                            SET nombre_cat =?, valor_cat = ?
+                                            WHERE categoria_id=?
+                                        ''', (categoria[1], categoria[2], categoria[0]))
+                    else:
+
+                        cursor.execute('''
+                                            INSERT INTO CategoriasInversiones (inversion_id, puerto_id, nombre_cat, valor_cat)
+                                            VALUES (?, ?, ?, ?)
+                                        ''', (inversion_id_cat, puerto_id, categoria[1], categoria[2]))
+            num_zonas = request.form.get('num_zonas')
+            if num_zonas:
+                # Limpiar las zonas existentes en la base de datos
+                cursor.execute("DELETE FROM ZonasConsumoElectrico WHERE puerto_id=?", (puerto_id,))
 
             for zona in zonas:
                 cursor.execute('''
@@ -486,6 +540,10 @@ def modify_port(puerto_id):
                         VALUES (?, ?, ?)
                     ''', (puerto_id, zona[1], zona[2]))
 
+            num_franjas = request.form.get('num_franjas')
+            if num_franjas:
+                # Limpiar las zonas existentes en la base de datos
+                cursor.execute("DELETE FROM FranjasHorariasConsumoElectrico WHERE puerto_id=?", (puerto_id,))
             for franja in franjas:
                 cursor.execute('''
                                     SELECT * FROM FranjasHorariasConsumoElectrico
@@ -500,10 +558,15 @@ def modify_port(puerto_id):
                             WHERE franja_id = ?
                         ''', (franja[1], franja[2], franja[3],existing_franja[0]))
                 else:
+
                     cursor.execute('''
                         INSERT INTO FranjasHorariasConsumoElectrico (puerto_id, franja_inicio, franja_fin, valor_franja)
                    VALUES (?, ?, ?, ?)
                ''', (puerto_id, franja[1], franja[2], franja[3]))
+            num_usos = request.form.get('num_usos')
+            if num_usos:
+                # Limpiar las zonas existentes en la base de datos
+                cursor.execute("DELETE FROM UsosConsumoElectrico WHERE puerto_id=?", (puerto_id,))
 
             for uso in usos:
                 cursor.execute('''
@@ -519,10 +582,15 @@ def modify_port(puerto_id):
                         WHERE uso_id = ?
                     ''', (uso[1], uso[2], existing_uso[0]))
                 else:
+
                     cursor.execute('''
                             INSERT INTO UsosConsumoElectrico (puerto_id, nombre_uso, valor_uso)
                             VALUES (?, ?, ?)
                        ''', (puerto_id, uso[1], uso[2]))
+            num_diques = request.form.get('num_diques')
+            if num_diques:
+                # Limpiar las zonas existentes en la base de datos
+                cursor.execute("DELETE FROM Diques WHERE puerto_id=?", (puerto_id,))
 
             for dique in diques:
                 cursor.execute('''
@@ -538,6 +606,7 @@ def modify_port(puerto_id):
                         WHERE dique_id = ?
                     ''', (dique[1], dique[2],dique[3], dique[4], dique[5], dique[6], dique[7], existing_dique[0]))
                 else:
+
                     cursor.execute('''
                         INSERT INTO Diques (puerto_id, nombre_dique, amplitud, periodo, velocidad, longitud_onda, profundidad, escullera)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -616,9 +685,40 @@ def modify_port(puerto_id):
                            ejercicios=ejercicios, inversiones=inversiones, categorias=categorias,
                            zonas=zonas, franjas=franjas, usos=usos, diques=diques)
 
-@app.route('/show_details')
-def show_details():
-    return "Página para consultar puerto"
+@app.route('/show_details/<puerto_id>', methods=['GET','POST'])
+def show_details(puerto_id):
+    conn = sqlite3.connect('puertos.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Generales WHERE puerto_id=?", (puerto_id,))
+    generales = cursor.fetchone()
+    cursor.execute("SELECT * FROM Responsables WHERE puerto_id=?", (puerto_id,))
+    responsables = cursor.fetchall()
+    cursor.execute("SELECT * FROM Socioeconomicos WHERE puerto_id=?", (puerto_id,))
+    socioeconomicos = cursor.fetchone()
+    cursor.execute("SELECT * FROM Tecnicos WHERE puerto_id=?", (puerto_id,))
+    tecnicos = cursor.fetchone()
+    cursor.execute("SELECT * FROM ResultadoExplotacion WHERE puerto_id=?", (puerto_id,))
+    explotacion = cursor.fetchall()
+    cursor.execute("SELECT * FROM ResultadoEjercicio WHERE puerto_id=?", (puerto_id,))
+    ejercicios = cursor.fetchall()
+    cursor.execute("SELECT * FROM Inversiones WHERE puerto_id=?", (puerto_id,))
+    inversiones = cursor.fetchall()
+    cursor.execute("SELECT * FROM CategoriasInversiones WHERE puerto_id=?", (puerto_id,))
+    categorias = cursor.fetchall()
+    cursor.execute("SELECT * FROM ZonasConsumoElectrico WHERE puerto_id=?", (puerto_id,))
+    zonas = cursor.fetchall()
+    cursor.execute("SELECT * FROM FranjasHorariasConsumoElectrico WHERE puerto_id=?", (puerto_id,))
+    franjas = cursor.fetchall()
+    cursor.execute("SELECT * FROM UsosConsumoElectrico WHERE puerto_id=?", (puerto_id,))
+    usos = cursor.fetchall()
+    cursor.execute("SELECT * FROM Diques WHERE puerto_id=?", (puerto_id,))
+    diques = cursor.fetchall()
+    conn.close()
+    return render_template('details.html', generales=generales, responsables=responsables,
+                           socioeconomicos=socioeconomicos, tecnicos=tecnicos, explotacion=explotacion,
+                           ejercicios=ejercicios, inversiones=inversiones, categorias=categorias,
+                           zonas=zonas, franjas=franjas, usos=usos, diques=diques)
+
 
 @app.route('/delete_port', methods=['POST'])
 def delete_port():
@@ -642,7 +742,6 @@ def delete_port():
     cursor.execute("DELETE FROM UsosConsumoElectrico WHERE puerto_id  = ?", (puerto_id,))
     cursor.execute("DELETE FROM Diques WHERE puerto_id  = ?", (puerto_id,))
 
-
     # Confirmar cambios y cerrar conexión
     conn.commit()
     conn.close()
@@ -650,4 +749,9 @@ def delete_port():
     return redirect(url_for('index'))  # Redireccionar a la página index.html
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000,debug=False)
+    http_server = WSGIServer(('0.0.0.0', 8000), app)
+    print("Servidor en ejecución...")
+    http_server.serve_forever()
+
+#QUE EL BOTON ELIMINAR SALGA SOLO EN EL ULTIMO DE AÑADIR
+#QUE SEA ACCESIBLE DESDE CUALQUIER SITIO

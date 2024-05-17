@@ -184,7 +184,9 @@ function agregarResponsable() {
             <option value="2">2</option>
             <option value="3">3</option>
             <option value="4">4</option>
-            <option value="5">5</option>`;
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>`;
 
 
         numCategoriasSelect.onchange = function() {
@@ -475,6 +477,7 @@ function agregarResponsable() {
         }
         return true;
     }
+
     function confirmarAñadir() {
         if (confirm("¿Estás seguro de que deseas añadir este puerto?")) {
             // Si el usuario hace clic en "Aceptar"
@@ -485,8 +488,6 @@ function agregarResponsable() {
             confirmationInput.value = "Aceptar";
             document.getElementById("addPortForm").appendChild(confirmationInput);
 
-            // Envía el formulario de modificación
-            document.getElementById("addPortForm").submit();
         } else {
             // Si el usuario hace clic en "Cancelar", no se hace nada
             return false;
@@ -503,8 +504,6 @@ function agregarResponsable() {
             confirmationInput.value = "Aceptar";
             document.getElementById("modifyPortForm").appendChild(confirmationInput);
 
-            // Envía el formulario de modificación
-            document.getElementById("modifyPortForm").submit();
         } else {
             // Si el usuario hace clic en "Cancelar", no se hace nada
             return false;

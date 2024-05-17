@@ -18,6 +18,14 @@ h3 {
     text-transform: uppercase;
 }
 
+
+p {
+  margin-right: 10%;
+  display:inline;
+}
+
+
+
 nav ul {
     list-style-type: none;
     padding: 0;
@@ -42,7 +50,7 @@ nav ul li a:hover {
 
 fieldset {
     margin-bottom: 20px;
-    border: 1px solid #ccc;
+    border: 1px solid #000000;
     border-radius: 5px;
     padding: 10px;
 }

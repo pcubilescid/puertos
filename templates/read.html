@@ -11,6 +11,19 @@
     <form action="{{ url_for('consult_port') }}" method="POST">
         <label for="nombre_puerto">Nombre del Puerto</label>
         <input type="text" id="nombre_puerto" name="nombre" >
+
+        <label for="plan">Plan</label>
+        <select id="plan" name="plan">
+            <option value=""></option>
+            <option value="Plan Estratégico">Plan Estratégico</option>
+            <option value="Plan Transición Energética">Plan Transición Energética</option>
+            <option value="Plan Igualdad">Plan Igualdad</option>
+        </select>
+        <select id="si_no" name="si_no">
+            <option value=""></option>
+            <option value="Si">Si</option>
+            <option value="No">No</option>
+        </select>
         <button type="submit">Filtrar</button>
     </form>
     <hr>
@@ -35,10 +48,10 @@
                     <div class="port-container">
                         <div class="port-info"></div>
                         <div class="action-buttons">
-                            <form action="{{ url_for('show_details', puerto_id=puerto[0]) }}" method="GET">
+                            <form action="{{ url_for('show_details', puerto_id=puerto[0])}}" method="GET">
                                 <button class="action-button consult-button" type="submit">Consultar</button>
                             </form>
-                            <form action="{{ url_for('modify_port', puerto_id=puerto[0]) }}" method="GET">
+                            <form action="{{ url_for('modify_port', puerto_id=puerto[0])}}" method="GET">
                                 <button class="action-button modify-button" type="submit">Modificar</button>
                             </form>
                             <form action="{{ url_for('delete_port') }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este puerto?');">

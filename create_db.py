@@ -90,8 +90,7 @@ cursor.execute('''
         puerto_id INTEGER NOT NULL,
         nombre_cat TEXT,
         valor_cat REAL,
-        FOREIGN KEY (inversion_id) REFERENCES Inversiones(inversion_id),
-        FOREIGN KEY (puerto_id) REFERENCES Socioeconomicos(puerto_id)
+        FOREIGN KEY (inversion_id) REFERENCES Inversiones(inversion_id)
     )
 ''')
 
