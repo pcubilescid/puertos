@@ -1,10 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for
+
+# Pablo Cubiles Cid
+
+from flask import Flask, render_template, request, redirect, url_for, send_file
 import sqlite3
 from sqlite3 import Error
 from gevent.pywsgi import WSGIServer
+import pandas as pd
+from io import BytesIO
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -13,206 +19,31 @@ def index():
 def add_port():
     if request.method == 'POST':
         if request.form.get('confirmacion') == 'Aceptar':
-            # Obtener datos del formulario
-            nombre = request.form['nombre']
-            direccion = request.form['direccion']
-            telefono = request.form['telefono']
-            email = request.form['email']
-            num_trabajadores_total = request.form['num_trabajadores_total']
-            num_trabajadores_hombres = request.form['num_trabajadores_hombres']
-            num_trabajadores_mujeres = request.form['num_trabajadores_mujeres']
-            volumen_ventas = request.form['volumen_ventas']
-            colaboracion = request.form['colaboracion']
-            plan_estrategico_enlace = request.form['plan_estrategico_enlace']
-            plan_estrategico_descripcion = request.form['plan_estrategico_descripcion']
-            plan_transicion_energetica_enlace = request.form['plan_transicion_energetica_enlace']
-            plan_transicion_energetica_descripcion = request.form['plan_transicion_energetica_descripcion']
-            plan_igualdad_enlace = request.form['plan_igualdad_enlace']
-            plan_igualdad_descripcion = request.form['plan_igualdad_descripcion']
-
-            # Conexión a la base de datos
+            form_data = request.form.to_dict()
             conn = sqlite3.connect('puertos.db')
             cursor = conn.cursor()
 
             try:
-                # Insertar datos en la tabla 'Generales'
                 cursor.execute('''
                     INSERT INTO Generales (nombre_pu, direccion, telefono, mail)
                     VALUES (?, ?, ?, ?)
-                ''', (nombre, direccion, telefono, email))
+                ''', (form_data['nombre'], form_data['direccion'], form_data['telefono'], form_data['email']))
 
-                # Obtener el ID del último puerto insertado
                 puerto_id = cursor.lastrowid
 
-                # Obtener los responsables del formulario
-                responsables = []
-                for i in range(1, 11):  # Máximo de 10 responsables
-                    responsable_nombre = request.form.get(f'nombre_responsable_{i}')
-                    responsable_apellidos = request.form.get(f'apellidos_responsable_{i}')
-                    responsable_cargo = request.form.get(f'cargo_responsable_{i}')
-                    if responsable_nombre and responsable_apellidos and responsable_cargo:  # Si se proporciona nombre y cargo
-                        responsables.append((responsable_nombre, responsable_apellidos,  responsable_cargo))
-
-                # Insertar responsables en la base de datos
-                for responsable in responsables:
-                    cursor.execute('''
-                        INSERT INTO responsables (puerto_id, nombre_res, apellidos, cargo_res)
-                        VALUES (?, ?, ?, ?)
-                    ''', (puerto_id, responsable[0], responsable[1], responsable[2]))
-
-                # Insertar datos en la tabla 'Socioeconomicos'
-                cursor.execute('''
-                    INSERT INTO Socioeconomicos (puerto_id, trab_total, trab_hombres, trab_mujeres, volumen_ventas, colaboracion, plan_estrategico_enlace, plan_estrategico_descripcion, plan_transicion_energetica_enlace, plan_transicion_energetica_descripcion, plan_igualdad_enlace, plan_igualdad_descripcion)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (puerto_id, num_trabajadores_total, num_trabajadores_hombres, num_trabajadores_mujeres, volumen_ventas,
-                      colaboracion, plan_estrategico_enlace, plan_estrategico_descripcion,
-                      plan_transicion_energetica_enlace, plan_transicion_energetica_descripcion, plan_igualdad_enlace,
-                      plan_igualdad_descripcion))
-
-                # Obtener los resultados de explotacion del formulario
-                explotaciones = []
-                for i in range(1, 11):  # Máximo de 10 responsables
-                    anio_explotacion = request.form.get(f'anio_explotacion_{i}')
-                    valor_explotacion = request.form.get(f'valor_explotacion_{i}')
-                    if anio_explotacion and valor_explotacion:  # Si se proporciona nombre y cargo
-                        explotaciones.append((anio_explotacion, valor_explotacion))
-
-                for explotacion in explotaciones:
-                    cursor.execute('''
-                        INSERT INTO ResultadoExplotacion (puerto_id, anio_ex, valor_ex)
-                        VALUES (?, ?, ?)
-                    ''', (puerto_id, explotacion[0], explotacion[1]))
-
-                # Obtener los resultados de ejercicio del formulario
-                ejercicios = []
-                for i in range(1, 11):  # Máximo de 10 responsables
-                    anio_ejercicio = request.form.get(f'anio_ejercicio_{i}')
-                    valor_ejercicio = request.form.get(f'valor_ejercicio_{i}')
-                    if anio_ejercicio and valor_ejercicio:  # Si se proporciona nombre y cargo
-                        ejercicios.append((anio_ejercicio, valor_ejercicio))
-
-                for ejercicio in ejercicios:
-                    cursor.execute('''
-                                INSERT INTO ResultadoEjercicio (puerto_id, anio_ej, valor_ej)
-                                VALUES (?, ?, ?)
-                            ''', (puerto_id, ejercicio[0], ejercicio[1]))
-
-                # Obtener los resultados de inversiones del formulario
-                inversiones = []
-                for i in range(1, 11):  # Máximo de 10 inversiones
-                    anio_inversion = request.form.get(f'anio_inversion_{i}')
-                    valor_inversion = request.form.get(f'valor_inversion_{i}')
-                    if anio_inversion and valor_inversion:  # Si se proporciona año y valor de inversión
-                        # Guardar la inversión actual
-                        inversion_actual = (anio_inversion, valor_inversion)
-                        # Inicializar la lista de categorías para esta inversión
-                        categorias = []
-                        # Obtener los resultados de categorías de inversión del formulario
-                        for j in range(1, 11):  # Máximo de 10 categorías por inversión
-                            nombre_categoria = request.form.get(f'nombre_categoria_{i}_{j}')
-                            valor_categoria = request.form.get(f'valor_categoria_{i}_{j}')
-                            if nombre_categoria and valor_categoria:  # Si se proporciona nombre y valor de categoría
-                                categorias.append((nombre_categoria, valor_categoria))
-                        # Guardar la inversión actual junto con sus categorías
-                        inversiones.append((inversion_actual, categorias))
-
-                # Iterar sobre las inversiones y guardarlas en la base de datos
-                for inversion, categorias in inversiones:
-
-                    cursor.execute('''
-                        INSERT INTO Inversiones (puerto_id, anio_in, valor_in)
-                        VALUES (?, ?, ?)
-                    ''', (puerto_id, inversion[0], inversion[1]))
-                    inversion_id = cursor.lastrowid
-
-                    # Iterar sobre las categorías de esta inversión y guardarlas en la base de datos
-                    for categoria in categorias:
-
-                        cursor.execute('''
-                            INSERT INTO CategoriasInversiones (inversion_id, puerto_id, nombre_cat, valor_cat)
-                            VALUES (?, ?, ?, ?)
-                        ''', (inversion_id, puerto_id, categoria[0], categoria[1]))
-
-                # Insertar datos en la tabla 'Tecnicos'
-                consumo_electrico_total = request.form['consumo_electrico_total']
-                consumo_electrico_autoconsumo = request.form['consumo_electrico_autoconsumo']
-                consumo_electrico_clientes = request.form['consumo_electrico_clientes']
-                venta_energetica_red = request.form['venta_energetica_red']
-                nivel_proteccion_ambiental = request.form['nivel_proteccion_ambiental']
-                cursor.execute('''
-                    INSERT INTO Tecnicos (puerto_id, consumo_electrico_total, autoconsumo, consumo_electrico_clientes, venta_energetica_red, nivel_proteccion_ambiental)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (puerto_id, consumo_electrico_total, consumo_electrico_autoconsumo, consumo_electrico_clientes,
-                      venta_energetica_red, nivel_proteccion_ambiental))
-
-
-                # Obtener los resultados de zonas consumo electrico  del formulario
-                zonas = []
-                for i in range(1, 11):  # Máximo de 10 responsables
-                    zona_nombre = request.form.get(f'zona_nombre_{i}')
-                    zona_consumo = request.form.get(f'zona_consumo_{i}')
-                    if zona_nombre and zona_consumo:  # Si se proporciona nombre y cargo
-                        zonas.append((zona_nombre, zona_consumo))
-
-                for zona in zonas:
-                    cursor.execute('''
-                                    INSERT INTO ZonasConsumoElectrico (puerto_id, nombre_zona, valor_zona)
-                                    VALUES (?, ?, ?)
-                                ''', (puerto_id, zona[0], zona[1]))
-
-                # Obtener los resultados de franjas horarias de consumo electrico  del formulario
-                franjas = []
-                for i in range(1, 11):  # Máximo de 10 responsables
-                    franja_inicio = request.form.get(f'franja_inicio_{i}')
-                    franja_fin = request.form.get(f'franja_fin_{i}')
-                    franja_consumo = request.form.get(f'franja_consumo_{i}')
-                    if franja_inicio and franja_fin and franja_consumo:  # Si se proporciona nombre y cargo
-                        franjas.append((franja_inicio, franja_fin, franja_consumo))
-
-                for franja in franjas:
-                    cursor.execute('''
-                                INSERT INTO FranjasHorariasConsumoElectrico (puerto_id, franja_inicio, franja_fin, valor_franja)
-                                VALUES (?, ?, ?, ?)
-                            ''', (puerto_id, franja[0], franja[1], franja[2]))
-
-                # Obtener los resultados de usos de consumo electrico  del formulario
-                usos = []
-                for i in range(1, 11):  # Máximo de 10 responsables
-                    uso_nombre = request.form.get(f'uso_nombre_{i}')
-                    uso_consumo = request.form.get(f'uso_consumo_{i}')
-
-                    if uso_nombre and uso_consumo:  # Si se proporciona nombre y cargo
-                        usos.append((uso_nombre, uso_consumo))
-
-                for uso in usos:
-                    cursor.execute('''
-                                        INSERT INTO UsosConsumoElectrico (puerto_id, nombre_uso, valor_uso)
-                                        VALUES (?, ?, ?)
-                                    ''', (puerto_id, uso[0], uso[1]))
-
-                # Obtener los resultados de diques  del formulario
-                diques = []
-                for i in range(1, 11):  # Máximo de 10 responsables
-                    nombre_dique = request.form.get(f'dique_nombre_{i}')
-                    amplitud = request.form.get(f'dique_amplitud_{i}')
-                    periodo = request.form.get(f'dique_periodo_{i}')
-                    velocidad = request.form.get(f'dique_velocidad_{i}')
-                    longitud_onda = request.form.get(f'dique_longitud_{i}')
-                    profundidad = request.form.get(f'dique_profundidad_{i}')
-                    escullera = request.form.get(f'dique_escullera_{i}')
-
-                    if nombre_dique:  # Si se proporciona nombre y cargo
-                        diques.append((nombre_dique, amplitud, periodo, velocidad, longitud_onda, profundidad, escullera))
-
-                for dique in diques:
-                    cursor.execute('''
-                        INSERT INTO Diques (puerto_id, nombre_dique, amplitud, periodo, velocidad, longitud_onda, profundidad, escullera)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (puerto_id, dique[0], dique[1], dique[2], dique[3], dique[4], dique[5], dique[6]))
+                insert_responsables(cursor, puerto_id, form_data)
+                insert_socioeconomicos(cursor, puerto_id, form_data)
+                insert_explotacion_data(cursor, puerto_id, form_data)
+                insert_ejercicio_data(cursor, puerto_id, form_data)
+                insert_inversion_data(cursor, puerto_id, form_data)
+                insert_tecnicos_data(cursor, puerto_id, form_data)
+                insert_zonas_consumo_electrico_data(cursor, puerto_id, form_data)
+                insert_franjas_consumo_electrico_data(cursor, puerto_id, form_data)
+                insert_usos_consumo_electrico_data(cursor, puerto_id, form_data)
+                insert_diques_data(cursor, puerto_id, form_data)
 
                 conn.commit()
                 conn.close()
-
                 return redirect(url_for('index'))
 
             except Error as e:
@@ -224,12 +55,125 @@ def add_port():
             return render_template('create.html')
     return render_template('create.html')
 
+def insert_responsables(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        responsable_nombre = form_data.get(f'nombre_responsable_{i}')
+        responsable_apellidos = form_data.get(f'apellidos_responsable_{i}')
+        responsable_cargo = form_data.get(f'cargo_responsable_{i}')
+        if responsable_nombre and responsable_apellidos and responsable_cargo:
+            cursor.execute('''
+                INSERT INTO responsables (puerto_id, nombre_res, apellidos, cargo_res)
+                VALUES (?, ?, ?, ?)
+            ''', (puerto_id, responsable_nombre, responsable_apellidos, responsable_cargo))
+
+def insert_socioeconomicos(cursor, puerto_id, form_data):
+    cursor.execute('''
+        INSERT INTO Socioeconomicos (puerto_id, trab_total, trab_hombres, trab_mujeres, volumen_ventas, colaboracion, plan_estrategico_enlace, plan_estrategico_descripcion, plan_transicion_energetica_enlace, plan_transicion_energetica_descripcion, plan_igualdad_enlace, plan_igualdad_descripcion)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (puerto_id, form_data['num_trabajadores_total'], form_data['num_trabajadores_hombres'], form_data['num_trabajadores_mujeres'], form_data['volumen_ventas'], form_data['colaboracion'], form_data['plan_estrategico_enlace'], form_data['plan_estrategico_descripcion'], form_data['plan_transicion_energetica_enlace'], form_data['plan_transicion_energetica_descripcion'], form_data['plan_igualdad_enlace'], form_data['plan_igualdad_descripcion']))
+
+def insert_explotacion_data(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        anio_explotacion = form_data.get(f'anio_explotacion_{i}')
+        valor_explotacion = form_data.get(f'valor_explotacion_{i}')
+        if anio_explotacion and valor_explotacion:
+            cursor.execute('''
+                INSERT INTO ResultadoExplotacion (puerto_id, anio_ex, valor_ex)
+                VALUES (?, ?, ?)
+            ''', (puerto_id, anio_explotacion, valor_explotacion))
+
+def insert_ejercicio_data(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        anio_ejercicio = form_data.get(f'anio_ejercicio_{i}')
+        valor_ejercicio = form_data.get(f'valor_ejercicio_{i}')
+        if anio_ejercicio and valor_ejercicio:
+            cursor.execute('''
+                INSERT INTO ResultadoEjercicio (puerto_id, anio_ej, valor_ej)
+                VALUES (?, ?, ?)
+            ''', (puerto_id, anio_ejercicio, valor_ejercicio))
+
+def insert_inversion_data(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        anio_inversion = form_data.get(f'anio_inversion_{i}')
+        valor_inversion = form_data.get(f'valor_inversion_{i}')
+        if anio_inversion and valor_inversion:
+            inversion_id = insert_inversion(cursor, puerto_id, anio_inversion, valor_inversion, form_data, i)
+            insert_categorias_inversion(cursor, inversion_id, puerto_id, form_data, i)
+
+def insert_inversion(cursor, puerto_id, anio_inversion, valor_inversion, form_data, i):
+    cursor.execute('''
+        INSERT INTO Inversiones (puerto_id, anio_in, valor_in)
+        VALUES (?, ?, ?)
+    ''', (puerto_id, anio_inversion, valor_inversion))
+    return cursor.lastrowid
+
+def insert_categorias_inversion(cursor, inversion_id, puerto_id, form_data, i):
+    for j in range(1, 11):
+        nombre_categoria = form_data.get(f'nombre_categoria_{i}_{j}')
+        valor_categoria = form_data.get(f'valor_categoria_{i}_{j}')
+        if nombre_categoria and valor_categoria:
+            cursor.execute('''
+                INSERT INTO CategoriasInversiones (inversion_id, puerto_id, nombre_cat, valor_cat)
+                VALUES (?, ?, ?, ?)
+            ''', (inversion_id, puerto_id, nombre_categoria, valor_categoria))
+
+def insert_tecnicos_data(cursor, puerto_id, form_data):
+    cursor.execute('''
+        INSERT INTO Tecnicos (puerto_id, consumo_electrico_total, autoconsumo, consumo_electrico_clientes, venta_energetica_red, nivel_proteccion_ambiental)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (puerto_id, form_data['consumo_electrico_total'], form_data['consumo_electrico_autoconsumo'], form_data['consumo_electrico_clientes'], form_data['venta_energetica_red'], form_data['nivel_proteccion_ambiental']))
+
+def insert_zonas_consumo_electrico_data(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        zona_nombre = form_data.get(f'        zona_nombre_{i}')
+        zona_consumo = form_data.get(f'zona_consumo_{i}')
+        if zona_nombre and zona_consumo:
+            cursor.execute('''
+                INSERT INTO ZonasConsumoElectrico (puerto_id, nombre_zona, valor_zona)
+                VALUES (?, ?, ?)
+            ''', (puerto_id, zona_nombre, zona_consumo))
+
+def insert_franjas_consumo_electrico_data(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        franja_inicio = form_data.get(f'franja_inicio_{i}')
+        franja_fin = form_data.get(f'franja_fin_{i}')
+        franja_consumo = form_data.get(f'franja_consumo_{i}')
+        if franja_inicio and franja_fin and franja_consumo:
+            cursor.execute('''
+                INSERT INTO FranjasHorariasConsumoElectrico (puerto_id, franja_inicio, franja_fin, valor_franja)
+                VALUES (?, ?, ?, ?)
+            ''', (puerto_id, franja_inicio, franja_fin, franja_consumo))
+
+def insert_usos_consumo_electrico_data(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        uso_nombre = form_data.get(f'uso_nombre_{i}')
+        uso_consumo = form_data.get(f'uso_consumo_{i}')
+        if uso_nombre and uso_consumo:
+            cursor.execute('''
+                INSERT INTO UsosConsumoElectrico (puerto_id, nombre_uso, valor_uso)
+                VALUES (?, ?, ?)
+            ''', (puerto_id, uso_nombre, uso_consumo))
+
+def insert_diques_data(cursor, puerto_id, form_data):
+    for i in range(1, 11):
+        nombre_dique = form_data.get(f'dique_nombre_{i}')
+        if nombre_dique:
+            amplitud = form_data.get(f'dique_amplitud_{i}')
+            periodo = form_data.get(f'dique_periodo_{i}')
+            velocidad = form_data.get(f'dique_velocidad_{i}')
+            longitud_onda = form_data.get(f'dique_longitud_{i}')
+            profundidad = form_data.get(f'dique_profundidad_{i}')
+            escullera = form_data.get(f'dique_escullera_{i}')
+            cursor.execute('''
+                INSERT INTO Diques (puerto_id, nombre_dique, amplitud, periodo, velocidad, longitud_onda, profundidad, escullera)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (puerto_id, nombre_dique, amplitud, periodo, velocidad, longitud_onda, profundidad, escullera))
+
 @app.route('/consult_port', methods=['GET', 'POST'])
 def consult_port():
     conn = sqlite3.connect('puertos.db')
     cursor = conn.cursor()
 
-    # Consulta para obtener todos los puertos y solo los campos necesarios
     cursor.execute("SELECT puerto_id, nombre_pu, direccion, telefono, mail FROM Generales")
     puertos = cursor.fetchall()
 
@@ -237,11 +181,11 @@ def consult_port():
         nombre = request.form['nombre']
         plan = request.form.get('plan')
         si_no = request.form.get('si_no')
-        # Consulta para filtrar por nombre
         query = "SELECT G.puerto_id, G.nombre_pu, G.direccion, G.telefono, G.mail FROM Generales G JOIN Socioeconomicos S ON G.puerto_id = S.puerto_id WHERE G.nombre_pu LIKE ?"
         parameters = ('%' + nombre + '%',)
 
         if plan and si_no:
+            field = ""
             if plan == "Plan Estratégico":
                 field = "plan_estrategico_enlace"
             elif plan == "Plan Transición Energética":
@@ -253,8 +197,6 @@ def consult_port():
             elif si_no == "No":
                 condition = f"(S.{field} IS NULL OR LENGTH(S.{field}) = 0)"
             query += f" AND {condition}"
-        else:
-            pass
 
         cursor.execute(query, parameters)
         puertos = cursor.fetchall()
@@ -685,40 +627,119 @@ def modify_port(puerto_id):
                            ejercicios=ejercicios, inversiones=inversiones, categorias=categorias,
                            zonas=zonas, franjas=franjas, usos=usos, diques=diques)
 
-@app.route('/show_details/<puerto_id>', methods=['GET','POST'])
+
+@app.route('/show_details/<puerto_id>', methods=['GET', 'POST'])
 def show_details(puerto_id):
     conn = sqlite3.connect('puertos.db')
     cursor = conn.cursor()
+
+    # Mantener el código original
     cursor.execute("SELECT * FROM Generales WHERE puerto_id=?", (puerto_id,))
     generales = cursor.fetchone()
+    nombre = generales[1]
+    generales_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM Responsables WHERE puerto_id=?", (puerto_id,))
     responsables = cursor.fetchall()
+    responsables_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM Socioeconomicos WHERE puerto_id=?", (puerto_id,))
     socioeconomicos = cursor.fetchone()
+    socioeconomicos_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM Tecnicos WHERE puerto_id=?", (puerto_id,))
     tecnicos = cursor.fetchone()
+    tecnicos_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM ResultadoExplotacion WHERE puerto_id=?", (puerto_id,))
     explotacion = cursor.fetchall()
+    explotacion_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM ResultadoEjercicio WHERE puerto_id=?", (puerto_id,))
     ejercicios = cursor.fetchall()
+    ejercicios_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM Inversiones WHERE puerto_id=?", (puerto_id,))
     inversiones = cursor.fetchall()
+    inversiones_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM CategoriasInversiones WHERE puerto_id=?", (puerto_id,))
     categorias = cursor.fetchall()
+    categorias_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM ZonasConsumoElectrico WHERE puerto_id=?", (puerto_id,))
     zonas = cursor.fetchall()
+    zonas_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM FranjasHorariasConsumoElectrico WHERE puerto_id=?", (puerto_id,))
     franjas = cursor.fetchall()
+    franjas_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM UsosConsumoElectrico WHERE puerto_id=?", (puerto_id,))
     usos = cursor.fetchall()
+    usos_columns = [desc[0] for desc in cursor.description]
+
     cursor.execute("SELECT * FROM Diques WHERE puerto_id=?", (puerto_id,))
     diques = cursor.fetchall()
+    diques_columns = [desc[0] for desc in cursor.description]
+
     conn.close()
+
+    def convert_to_dataframe(data, columns):
+        if isinstance(data, list) and len(data) > 0:
+            return pd.DataFrame(data, columns=columns)
+        elif data:
+            return pd.DataFrame([data], columns=columns)
+        else:
+            return pd.DataFrame(columns=columns)
+
+    # Convert each dataset to a DataFrame
+    df_generales = convert_to_dataframe(generales, generales_columns)
+    df_responsables = convert_to_dataframe(responsables, responsables_columns)
+    df_socioeconomicos = convert_to_dataframe(socioeconomicos, socioeconomicos_columns)
+    df_tecnicos = convert_to_dataframe(tecnicos, tecnicos_columns)
+    df_explotacion = convert_to_dataframe(explotacion, explotacion_columns)
+    df_ejercicios = convert_to_dataframe(ejercicios, ejercicios_columns)
+    df_inversiones = convert_to_dataframe(inversiones, inversiones_columns)
+    df_categorias = convert_to_dataframe(categorias, categorias_columns)
+    df_zonas = convert_to_dataframe(zonas, zonas_columns)
+    df_franjas = convert_to_dataframe(franjas, franjas_columns)
+    df_usos = convert_to_dataframe(usos, usos_columns)
+    df_diques = convert_to_dataframe(diques, diques_columns)
+
+    if request.method == 'POST' and request.form.get('action') == 'download_excel':
+        output = BytesIO()
+        sheets = {
+            'Generales': [df_generales, df_responsables],
+            'Socioeconomicos': [df_socioeconomicos, df_explotacion, df_ejercicios, df_inversiones, df_categorias],
+            'Tecnicos': [df_tecnicos, df_zonas, df_franjas, df_usos, df_diques]
+        }
+
+        # Try to load the existing workbook
+        try:
+            output.seek(0)
+            existing_book = pd.read_excel(output, sheet_name=None)
+        except Exception:
+            existing_book = {}
+
+        # Write the data to the workbook
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            for sheet_name, dfs in sheets.items():
+                if sheet_name in existing_book:
+                    existing_df = existing_book[sheet_name]
+                    new_df = pd.concat([existing_df] + dfs, ignore_index=True)
+                else:
+                    new_df = pd.concat(dfs, ignore_index=True)
+
+                new_df.to_excel(writer, index=False, sheet_name=sheet_name)
+
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name=f'{nombre}.xlsx')
+
     return render_template('details.html', generales=generales, responsables=responsables,
                            socioeconomicos=socioeconomicos, tecnicos=tecnicos, explotacion=explotacion,
                            ejercicios=ejercicios, inversiones=inversiones, categorias=categorias,
                            zonas=zonas, franjas=franjas, usos=usos, diques=diques)
-
 
 @app.route('/delete_port', methods=['POST'])
 def delete_port():
@@ -749,9 +770,12 @@ def delete_port():
     return redirect(url_for('index'))  # Redireccionar a la página index.html
 
 if __name__ == "__main__":
-    http_server = WSGIServer(('0.0.0.0', 8000), app)
+    http_server = WSGIServer(('0.0.0.0', 443), app)
     print("Servidor en ejecución...")
     http_server.serve_forever()
 
-#QUE EL BOTON ELIMINAR SALGA SOLO EN EL ULTIMO DE AÑADIR
-#QUE SEA ACCESIBLE DESDE CUALQUIER SITIO
+#modificar, que se puedan ir eliminando las cosas no obligatorias
+#consumo, ponerlo por año
+#implementar entorno web
+
+

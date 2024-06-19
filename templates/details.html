@@ -8,56 +8,84 @@
 </head>
 <body>
 <div class="container">
-    <h1>Puerto {{ generales[1] }}</h1>
-    <fieldset style="background: #fcffdf">
+    <h1>{{ generales[1] }}</h1>
+    <fieldset class="datos_generales" >
+        {% macro format_valor(valor) %}
+            {% set valor = valor|string %}
+            {% set valor = valor|replace('.', ',') %}
+            {% set valor = valor|reverse %}
+            {% set character_position = valor.find(",") %}
+            {% set v=namespace(valor_con_puntos = '') %}
+            {% if character_position != -1 %}
+                {% set ns = namespace(contador=0) %}
+                {% for index in range(character_position + 1, valor|length) %}
+                    {% if ns.contador == 3 %}
+                        {% set v.valor_con_puntos = v.valor_con_puntos ~ '.' %}
+                        {% set ns.contador = 0 %}
+                    {% endif %}
+                    {% set ns.contador = ns.contador + 1 %}
+                    {% set v.valor_con_puntos = v.valor_con_puntos + valor[index] %}
+                {% endfor %}
+                {% set v.valor_con_puntos = valor[:character_position + 1] ~ v.valor_con_puntos %}
+            {% endif %}
+            {% if valor.endswith('-') %}
+                {%set v.valor_con_puntos = v.valor_con_puntos|reverse%}
+                {{ v.valor_con_puntos[1:]}}
+            {% else %}
+
+                {{ v.valor_con_puntos|reverse }}
+            {% endif %}
+        {% endmacro %}
         <legend>Datos Generales</legend>
         <p>
-            <span ><b>NOMBRE:</b></span>
+            <span><b>NOMBRE:</b></span>
             <span>{{ generales[1] }}</span>
         </p>
         <p>
-            <span ><b>DIRECCIÓN:</b></span>
-            <span >{{ generales[2] }}</span>
+            <span><b>DIRECCIÓN:</b></span>
+            <span>{{ generales[2] }}</span>
         </p><br><br>
         <p>
-            <span ><b>TELÉFONO:</b></span>
+            <span><b>TELÉFONO:</b></span>
             <span>{{ generales[3] }}</span>
         </p>
         <p>
-            <span ><b>EMAIL:</b></span>
-            <span >{{ generales[4] }}</span>
-        </p><br><br>
+            <span><b>EMAIL:</b></span>
+            <span>{{ generales[4] }}</span>
+        </p>
         <h4><u>RESPONSABLES</u></h4>
         <div id="responsables">
             {% for responsable in responsables %}
-            <div id="responsable_{{ loop.index }}" >
-                <p style="display: flex; ">
+            <div id="responsable_{{ loop.index }}">
+                <p style="display: flex;">
                     <span style="flex: 0.35;">{{ responsable[2] }} {{ responsable[3] }}</span>
-                    <span style="flex: 0.65;"><b>{{ responsable[4] }}</b></span>
+                    <span style="flex: 0.65;"><b> {{ responsable[4] }}</b></span>
                 </p>
             </div>
             {% endfor %}
         </div>
-        </fieldset>
+    </fieldset>
     <br>
-    <fieldset style="background: #e4ffdf">
+    <fieldset class="datos_socioeconomicos" >
         <legend>Datos Socioeconómicos</legend>
         <p>
-            <span ><b>VOLUMEN DE VENTAS:</b></span>
+            <span><b>VOLUMEN DE VENTAS:</b></span>
             <span>{{ socioeconomicos[5] }}</span>
         </p>
         <p>
-            <span ><b>COLABORACIÓN PÚBLICO-PRIVADA:</b></span>
-            <span >{{ socioeconomicos[6] }}</span>
-        </p><br><br>
-        <div style="display: flex; justify-content: space-evenly; ">
+            <span><b>COLABORACIÓN PÚBLICO-PRIVADA:</b></span>
+            <span>{{ socioeconomicos[6] }}</span>
+        </p>
+        <div style="display: flex; justify-content: space-evenly;">
             <div id="resultados_explotacion" style="flex: 0.4;">
-            <h4><u>RESULTADOS DE EXPLOTACIÓN</u></h4>
+                <h4><u>RESULTADOS DE EXPLOTACIÓN</u></h4>
                 {% for resultado_explotacion in explotacion %}
-                <div id="resultado_explotacion_{{ loop.index }}" >
-                    <p style="display: flex; justify-content: space-evenly; ">
+                <div id="resultado_explotacion_{{ loop.index }}">
+                    <p style="display: flex; justify-content: space-evenly;">
                         <span style="flex: 0.3;"><b>{{ resultado_explotacion[2] }}</b></span>
-                        <span style="flex: 0.7;"><span >{{ resultado_explotacion[3] }} €</span></span>
+                        <span style="flex: 0.7; color: {% if resultado_explotacion[3] < 0 %}red{% else %}black{% endif %};">
+                            {{ "\t" + format_valor(resultado_explotacion[3]) + "€" }}
+                        </span>
                     </p>
                 </div>
                 {% endfor %}
@@ -65,173 +93,188 @@
             <div id="resultados_ejercicio" style="flex: 0.4;">
                 <h4><u>RESULTADOS DE EJERCICIO</u></h4>
                 {% for resultado_ejercicio in ejercicios %}
-                <div id="resultado_ejercicio_{{ loop.index }}" >
-                    <p style="display: flex; justify-content: space-evenly; ">
+                <div id="resultado_ejercicio_{{ loop.index }}">
+                    <p style="display: flex; justify-content: space-evenly;">
                         <span style="flex: 0.3;"><b>{{ resultado_ejercicio[2] }}</b></span>
-                        <span style="flex: 0.7;">{{ resultado_ejercicio[3] }} €</span>
+                        <span style="flex: 0.7; color: {% if resultado_ejercicio[3] < 0 %}red{% else %}black{% endif %};">
+                            {{ "\t" + format_valor(resultado_ejercicio[3]) + "€" }}
+                        </span>
                     </p>
                 </div>
                 {% endfor %}
             </div>
         </div>
         <h4><u>INVERSIONES</u></h4>
-        <div id="inversiones" style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
+        <div id="inversiones" style="display: flex; flex-wrap: wrap; justify-content: space-evenly;">
             {% for inversion in inversiones %}
-            <div id="inversion_{{ loop.index }}" style="flex: 0 1 calc(30%); ">
+            <div id="inversion_{{ loop.index }}" style="flex: 0 1 calc(45%);">
                 <fieldset>
                     <legend>{{ inversion[2] }}</legend>
-                <p>
-                    <span ><b>VALOR:</b></span>
-                    <span >{{ inversion[3] }} €</span>
-                </p><br>
-
-                <h4><u>CATEGORÍAS</u></h4>
-                <div id="categorias_inversion_{{ loop.index }}" >
-                    {% for categoria in categorias %}
-                    {% if categoria[1] == inversion[0] %}
-                    <p style="display: flex; justify-content: space-evenly; ">
-                        <span style="flex: 0.45;"><b>{{ categoria[3] }}</b></span>
-                        <span style="flex: 0.45;">{{ categoria[4] }} €</span>
+                    <p>
+                        <span><b>VALOR:</b></span>
+                        <span style="color: {% if inversion[3] < 0 %}red{% else %}black{% endif %};">
+                            {{ "\t" + format_valor(inversion[3]) + "€" }}
+                        </span>
                     </p>
-                    {% endif %}
-                    {% endfor %}
-                </div>
+                    <h4><u>CATEGORÍAS</u></h4>
+                    <div id="categorias_inversion_{{ loop.index }}">
+                        {% for categoria in categorias %}
+                        {% if categoria[1] == inversion[0] %}
+                        <p style="display: flex; justify-content: space-evenly;">
+                            <span style="flex: 0.40;"><b>{{ categoria[3] }}</b></span>
+                            <span style="flex: 0.40; color: {% if categoria[4] < 0 %}red{% else %}black{% endif %};">
+                                {{ "\t" + format_valor(categoria[4]) + "€" }}
+                            </span>
+                        </p>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
                 </fieldset>
             </div>
             {% endfor %}
         </div>
         <h4><u>TRABAJADORES</u></h4>
         <p>
-            <span ><b>TOTAL:</b></span>
+            <span><b>TOTAL:</b></span>
             <span>{{ socioeconomicos[2] }}</span>
-        </p><br><br>
-        <p>
-            <span ><b>Hombres:</b></span>
-            <span >{{ socioeconomicos[3] }}</span>
         </p>
         <p>
-            <span ><b>Mujeres:</b></span>
-            <span >{{ socioeconomicos[4] }}</span>
-        </p><br><br>
+            <span><b>Hombres:</b></span>
+            <span>{{ socioeconomicos[3] }}</span>
+        </p>
+        <p>
+            <span><b>Mujeres:</b></span>
+            <span>{{ socioeconomicos[4] }}</span>
+        </p>
         <h4><u>PLANES</u></h4>
-        <div style="display: flex; justify-content: space-evenly; ">
-            {% if socioeconomicos[7] and socioeconomicos[7]|length > 0 and socioeconomicos[8] and socioeconomicos[8]|length > 0%}
+        <div style="display: flex; justify-content: space-evenly;">
+            {% if socioeconomicos[7] and socioeconomicos[7]|length > 0 and socioeconomicos[8] and socioeconomicos[8]|length > 0 %}
                 <p style="flex: 0.3;">
-                    <a href="{{ socioeconomicos[7] }}" style="text-decoration: none;"
-                        <span ><b>ESTRATÉGICO</b></span>
-                    </a><br><br>
-                    <span >{{ socioeconomicos[8] }}</span>
-                </p> <br><br><br>
+                    <a href="{{ socioeconomicos[7] }}" style="text-decoration: none;">
+                        <span><b>ESTRATÉGICO</b></span><br><br>
+                    </a>
+                    <span>{{ socioeconomicos[8] }}</span>
+                </p>
             {% endif %}
-            {% if socioeconomicos[9] and socioeconomicos[9]|length > 0 and socioeconomicos[10] and socioeconomicos[10]|length > 0%}
+            {% if socioeconomicos[9] and socioeconomicos[9]|length > 0 and socioeconomicos[10] and socioeconomicos[10]|length > 0 %}
                 <p style="flex: 0.33;">
-                    <a href="{{ socioeconomicos[9] }}" style="text-decoration: none;"
-                        <span ><b>TRANSICIÓN ENERGÉTICA</b></span>
-                    </a><br><br>
-                    <span >{{ socioeconomicos[10] }}</span>
-                </p> <br><br><br>
+                    <a href="{{ socioeconomicos[9] }}" style="text-decoration: none;">
+                        <span><b>TRANSICIÓN ENERGÉTICA</b></span><br><br>
+                    </a>
+                    <span>{{ socioeconomicos[10] }}</span>
+                </p>
             {% endif %}
-            {% if socioeconomicos[11] and socioeconomicos[11]|length > 0 and socioeconomicos[12] and socioeconomicos[12]|length > 0%}
+            {% if socioeconomicos[11] and socioeconomicos[11]|length > 0 and socioeconomicos[12] and socioeconomicos[12]|length > 0 %}
                 <p style="flex: 0.33;">
-                    <a href="{{ socioeconomicos[11] }}" style="text-decoration: none;"
-                        <span ><b>IGUALDAD</b></span>
-                    </a><br><br>
-                    <span >{{ socioeconomicos[12] }}</span>
-                </p> <br><br><br>
+                    <a href="{{ socioeconomicos[11] }}" style="text-decoration: none;">
+                        <span><b>IGUALDAD</b></span><br><br>
+                    </a>
+                    <span>{{ socioeconomicos[12] }}</span>
+                </p>
             {% endif %}
         </div>
     </fieldset>
     <br>
-    <fieldset style="background: #dff4ff">
+    <fieldset class="datos-tecnicos" style="background: #dff4ff">
         <legend>Datos Técnicos</legend>
         <p>
-            <span ><b>PROTECCIÓN AMBIENTAL&emsp;</b></span>
-            <span>NIVEL {{ tecnicos[6] }}</span>
-        </p><br><br>
+            <span><b>PROTECCIÓN AMBIENTAL</b></span>
+            <span>NIVEL {{ tecnicos[6] }}</span><br>
+        </p>
         <fieldset>
             <legend style="font-size: 20px;">CONSUMO ELÉCTRICO (KW H)</legend>
             <p>
-                <span ><b>TOTAL:</b></span>
-                <span>{{ tecnicos[2] }}</span>
+                <span><b>TOTAL:</b></span>
+                <span>{{ "\t" + format_valor(tecnicos[2]) }}</span>
+            </p>
+            <p>
+                <span><b>Autoconsumo:</b></span>
+                <span>{{ "\t" + format_valor(tecnicos[3]) }}</span>
             </p><br><br>
             <p>
-                <span ><b>Autoconsumo:</b></span>
-                <span >{{ tecnicos[3] }}</span>
+                <span><b>Clientes:</b></span>
+                <span>{{ "\t" + format_valor(tecnicos[4]) }}</span>
             </p>
             <p>
-                <span ><b>Clientes:</b></span>
-                <span >{{ tecnicos[4] }}</span>
+                <span><b>Venta Energética o a la Red:</b></span>
+                <span>{{ "\t" + format_valor(tecnicos[5]) }}</span>
             </p>
-            <p>
-                <span ><b>Venta Energética o a la Red:</b></span>
-                <span >{{ tecnicos[5] }}</span>
-            </p><br>
             <h4><u>CLASIFICACIÓN</u></h4>
-            <div style="display: flex; justify-content: space-evenly; ">
-                <fieldset style="flex: 0.3;">
+            <div style="display: flex; justify-content: space-evenly;">
+                <fieldset style="flex: 0.33;">
                     <legend style="font-size: 15px;">ZONAS</legend>
                     {% for zona in zonas %}
-                    <p style="display: flex; justify-content: space-evenly; ">
-                        <span style="flex: 0.45;"><b>{{ zona[2] }}</b></span>
-                        <span style="flex: 0.45;">{{ zona[3] }}</span>
+                    <p style="display: flex; justify-content: space-evenly;">
+                        <span style="flex: 0.60;"><b>{{ zona[2] }}</b></span>
+                        <span style="flex: 0.30;">{{ "\t" + format_valor(zona[3]) }}</span>
                     </p>
                     {% endfor %}
                 </fieldset>
                 <fieldset style="flex: 0.25;">
                     <legend style="font-size: 15px;">FRANJAS</legend>
                     {% for franja in franjas %}
-                        <p >
-                            <span ><b>{{ franja[2] }} -</b></span>
-                            <span ><b>{{ franja[3] }}&emsp;</b></span>
-                            <span >{{ franja[4] }}</span>
-                        </p><br><br>
+                    <p>
+                        <span><b>{{ franja[2] }} -</b></span>
+                        <span><b>{{ franja[3] }}</b></span>
+                        <span>{{ "\t" + format_valor(franja[4]) }}</span>
+                    </p>
                     {% endfor %}
                 </fieldset>
-                <fieldset style="flex: 0.3;">
+                <fieldset style="flex: 0.33;">
                     <legend style="font-size: 15px;">USOS</legend>
                     {% for uso in usos %}
-                        <p style="display: flex; justify-content: space-evenly; ">
-                            <span style="flex: 0.45;"><b>{{ uso[2] }}</b></span>
-                            <span style="flex: 0.45;">{{ uso[3] }}</span>
-                        </p>
+                    <p style="display: flex; justify-content: space-evenly;">
+                        <span style="flex: 0.60;"><b>{{ uso[2] }}</b></span>
+                        <span style="flex: 0.30;">{{ "\t" + format_valor(uso[3]) }}</span>
+                    </p>
                     {% endfor %}
                 </fieldset>
             </div>
         </fieldset>
         <h3>Diques</h3>
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-evenly; ">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-evenly;">
             {% for dique in diques %}
-                <fieldset style="flex: 0 1 calc(30%);" >
-                    <legend style="font-size: 15px;">{{ dique[2] }}</legend>
-                    <p >
-                        <span ><b>Amplitud&emsp;</b></span>
-                        <span >{{ dique[3] }}</span>
-                    </p>
-                    <p >
-                        <span ><b>Periodo&emsp;</b></span>
-                        <span >{{ dique[4] }}</span>
-                    </p><br><br>
-                    <p >
-                        <span ><b>Velocidad&emsp;</b></span>
-                        <span >{{ dique[5] }}</span>
-                    </p>
-                    <p>
-                        <span ><b>Longitud de Onda&emsp;</b></span>
-                        <span >{{ dique[6] }}</span>
-                    </p><br><br>
-                    <p>
-                        <span ><b>Profundidad&emsp;</b></span>
-                        <span >{{ dique[7] }}</span>
-                    </p>
-                    <p>
-                        <span ><b>Escullera&emsp;</b></span>
-                        <span >{{ "Sí" if dique[8] == 1 else "No" }}</span>
-                    </p>
-                </fieldset>
+            <fieldset style="flex: 0 1 calc(27%);">
+                <legend style="font-size: 15px;">{{ dique[2] }}</legend>
+                <p>
+                    <span><b>Amplitud</b></span>
+                    <span>{{ "\t" + dique[3] }}</span>
+                </p><br><br>
+                <p>
+                    <span><b>Periodo</b></span>
+                    <span>{{ "\t" + dique[4] }}</span>
+                </p><br><br>
+                <p>
+                    <span><b>Velocidad</b></span>
+                    <span>{{ "\t" + dique[5] }}</span>
+                </p><br><br>
+                <p>
+                    <span><b>Longitud de Onda</b></span>
+                    <span>{{ "\t" + dique[6] }}</span>
+                </p><br><br>
+                <p>
+                    <span><b>Profundidad</b></span>
+                    <span>{{ "\t" + dique[7] }}</span>
+                </p><br><br>
+                <p>
+                    <span><b>Escollera</b></span>
+                    <span>{{"\t" +  "Sí" if dique[8] == 1 else "No" if dique[8] == 0 else "" }}</span>
+                </p>
+            </fieldset>
             {% endfor %}
         </div>
     </fieldset>
     <button type="button" id="button-back" onclick="window.location.href='{{ url_for('consult_port') }}'">Volver</button>
+    <form action="{{ request.url }}" method="POST">
+        <input type="hidden" name="key_value_data" value="{{ key_value_data }}">
+        <button type="submit" name="action" class="excel" value="download_excel">Excel</button>
+    </form>
+
+    <input type="button" name="imprimir" value="Imprimir" class="printbutton" onclick="window.print();">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 </div>
+<script src="{{ url_for('static', filename='create.js') }}"></script>
 </body>
 </html>

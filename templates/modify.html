@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>Modificar Puerto {{ generales[1] }}</h1>
+    <h1>Modificar {{ generales[1] }}</h1>
     <form id="modifyPortForm" action="{{ url_for('modify_port', puerto_id=generales[0] , nombre_puerto=generales[1]) }}" method="POST" onsubmit="return validarFormulario()">
         <fieldset>
             <legend>Datos Generales</legend>
@@ -30,10 +30,10 @@
                 </div>
                 {% endfor %}
             </div>
-            <button type="button" class="button-add" onclick="agregarResponsable()">Añadir Responsable</button><br><br>
+            <button type="button" class="button-add" onclick="addResponsable()">Añadir Responsable</button><br><br>
             <h3>Contacto</h3>
             <label for="telefono">Teléfono</label>
-            <input type="tel" id="telefono" name="telefono" value="{{ generales[3] }}" required onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+            <input type="text" id="telefono" name="telefono" value="{{ generales[3] }}" required oninput="validarTelefono(this)">
             <input type="hidden" id="telefono_error">
             <label for="email">Email</label>
             <input type="email" id="email" name="mail" value="{{ generales[4] }}" required><br>
@@ -57,7 +57,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <button type="button" class="button-add" onclick="agregarResultadoExplotacion()">Añadir Resultado de Explotación</button><br><br>
+            <button type="button" class="button-add" onclick="addResultExplotacion()">Añadir Resultado de Explotación</button><br><br>
             <h3>Resultados de Ejercicio</h3>
             <div id="resultados_ejercicio">
                 {% for resultado_ejercicio in ejercicios %}
@@ -70,7 +70,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <button type="button" class="button-add" onclick="agregarResultadoEjercicio()">Añadir Resultado de Ejercicio</button><br><br>
+            <button type="button" class="button-add" onclick="addResultEjercicio()">Añadir Resultado de Ejercicio</button><br><br>
             <h3>Inversiones</h3>
             <div id="inversiones">
                 {% set counter = namespace (i = 1) %}
@@ -112,7 +112,7 @@
                 {% endfor %}
             </div>
 
-            <button type="button" class="button-add" onclick="agregarInversion()">Añadir Inversión</button><br><br>
+            <button type="button" class="button-add" onclick="addInversion()">Añadir Inversión</button><br><br>
             <h3>Trabajadores</h3>
             <label for="num_trabajadores_total">Total</label>
             <input type="number" id="num_trabajadores_total" name="num_trabajadores_total" value="{{socioeconomicos[2]}}">
@@ -229,6 +229,7 @@
                         <input type="number" id="dique_profundidad_{{ loop.index }}" name="dique_profundidad_{{ loop.index }}" value="{{ dique[7] }}">
                         <label for="dique_escullera_{{ loop.index }}">¿Hay Escullera? </label>
                         <select id="dique_escullera_{{ loop.index }}" name="dique_escullera_{{ loop.index }}">
+                            <option value="" {% if not dique[8] %} selected {% endif %}></option>
                             <option value="1" {% if dique[8] == 1 %} selected {% endif %}>Sí</option>
                             <option value="0" {% if dique[8] == 0 %} selected {% endif %}>No</option>
                         </select>
